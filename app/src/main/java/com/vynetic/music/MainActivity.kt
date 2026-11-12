@@ -49,11 +49,11 @@ import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
 
-private val VyneticBg = Color(0xFFE9EAED)
-private val VyneticCard = Color(0xDDE3E5E9)
-private val VyneticBlue = Color(0xFF17191D)
-private val VyneticMint = Color(0xFF3C424B)
-private val VyneticMuted = Color(0xFF69717C)
+val VyneticBg = Color(0xFFE9EAED)
+val VyneticCard = Color(0xDDE3E5E9)
+val VyneticBlue = Color(0xFF17191D)
+val VyneticMint = Color(0xFF3C424B)
+val VyneticMuted = Color(0xFF69717C)
 
 class MainActivity : ComponentActivity() {
     var controller: MediaController? = null
