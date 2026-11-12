@@ -337,7 +337,11 @@ private fun VyneticSplash() {
                     .border(1.5.dp, Color.White.copy(alpha = glow * 0.75f), RoundedCornerShape(30.dp)),
                 contentAlignment = Alignment.Center
             ) {
-                Text("V", color = Color.White, fontSize = 62.sp, fontWeight = FontWeight.Black)
+                androidx.compose.foundation.Image(
+                    painter = androidx.compose.ui.res.painterResource(R.drawable.ic_vynetic_logo),
+                    contentDescription = "Vynetic Logo",
+                    modifier = Modifier.size(76.dp).clip(RoundedCornerShape(20.dp))
+                )
             }
             Spacer(Modifier.height(20.dp))
             Text("VYNETIC", color = Color.White, fontSize = 28.sp, fontWeight = FontWeight.Black, letterSpacing = 8.sp)
@@ -435,7 +439,11 @@ private fun VyneticApp(activity: MainActivity) {
                         .border(1.dp, Color(0x66FFFFFF), RoundedCornerShape(13.dp)),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text("V", color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.Black)
+                    androidx.compose.foundation.Image(
+                        painter = androidx.compose.ui.res.painterResource(R.drawable.ic_vynetic_logo),
+                        contentDescription = "Logo",
+                        modifier = Modifier.size(34.dp).clip(RoundedCornerShape(9.dp))
+                    )
                 }
                 Spacer(Modifier.width(12.dp))
                 Column(Modifier.weight(1f)) {
