@@ -1,7 +1,9 @@
 package com.vynetic.music
 
 import android.media.audiofx.Equalizer
+import androidx.media3.datasource.DefaultHttpDataSource
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
 
@@ -11,7 +13,15 @@ class PlaybackService : MediaSessionService() {
 
     override fun onCreate() {
         super.onCreate()
-        val player = ExoPlayer.Builder(this).build()
+        val dataSourceFactory = DefaultHttpDataSource.Factory()
+            .setUserAgent("com.google.android.youtube/20.01.35 (Linux; U; Android 11; id_ID)")
+            .setConnectTimeoutMs(15000)
+            .setReadTimeoutMs(20000)
+            .setAllowCrossProtocolRedirects(true)
+
+        val player = ExoPlayer.Builder(this)
+            .setMediaSourceFactory(DefaultMediaSourceFactory(dataSourceFactory))
+            .build()
         session = MediaSession.Builder(this, player).build()
         runCatching {
             equalizer = Equalizer(0, player.audioSessionId).apply { enabled = true }

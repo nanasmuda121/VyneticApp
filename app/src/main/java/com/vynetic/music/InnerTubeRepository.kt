@@ -19,7 +19,7 @@ import java.util.concurrent.TimeUnit
 object InnerTubeRepository {
     private const val MUSIC_ORIGIN = "https://music.youtube.com"
     private const val MUSIC_CLIENT_VERSION = "1.20260707.12.00"
-    private const val ANDROID_CLIENT_VERSION = "21.26.364"
+    private const val ANDROID_CLIENT_VERSION = "20.01.35"
 
     private val http = OkHttpClient.Builder()
         .connectTimeout(15, TimeUnit.SECONDS)
@@ -111,11 +111,17 @@ object InnerTubeRepository {
         val apiBase = "$origin/youtubei/v1"
         val clientName = if (musicClient) "67" else "3"
         val clientVersion = if (musicClient) MUSIC_CLIENT_VERSION else ANDROID_CLIENT_VERSION
+        val userAgent = if (musicClient) {
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+        } else {
+            "com.google.android.youtube/$ANDROID_CLIENT_VERSION (Linux; U; Android 11; id_ID)"
+        }
         val request = Request.Builder()
             .url("$apiBase/$endpoint?prettyPrint=false")
             .header("Content-Type", "application/json")
             .header("Origin", origin)
             .header("Referer", "$origin/")
+            .header("User-Agent", userAgent)
             .header("X-YouTube-Client-Name", clientName)
             .header("X-YouTube-Client-Version", clientVersion)
             .header("Accept-Language", "id-ID,id;q=0.9,en;q=0.8")
@@ -129,13 +135,20 @@ object InnerTubeRepository {
         }
     }
 
-    private fun context(musicClient: Boolean = true) = JSONObject()
-        .put("client", JSONObject()
+    private fun context(musicClient: Boolean = true): JSONObject {
+        val client = JSONObject()
             .put("clientName", if (musicClient) "WEB_REMIX" else "ANDROID")
             .put("clientVersion", if (musicClient) MUSIC_CLIENT_VERSION else ANDROID_CLIENT_VERSION)
             .put("hl", "id")
             .put("gl", "ID")
-            .put("platform", if (musicClient) "DESKTOP" else "MOBILE"))
+        if (!musicClient) {
+            client.put("androidSdkVersion", 30)
+            client.put("platform", "MOBILE")
+        } else {
+            client.put("platform", "DESKTOP")
+        }
+        return JSONObject().put("client", client)
+    }
 
     private fun collectObjects(value: Any?, key: String, output: MutableList<JSONObject>) {
         when (value) {

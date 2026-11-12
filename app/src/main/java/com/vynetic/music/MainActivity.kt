@@ -92,6 +92,10 @@ class MainActivity : ComponentActivity() {
                         }
                         if (playbackState == Player.STATE_ENDED) next()
                     }
+                    override fun onPlayerError(error: androidx.media3.common.PlaybackException) {
+                        status = "Error pemutaran: ${error.message ?: "gagal memuat audio"}"
+                        playing = false
+                    }
                 })
             }.onFailure { status = "Player belum siap: ${it.message ?: "error"}" }
         }, { command -> runOnUiThread(command) })
@@ -120,30 +124,34 @@ class MainActivity : ComponentActivity() {
 
     private fun playResolved(track: Track) {
         lifecycleScope.launch {
-            status = "Menyiapkan audio…"
-            val quality = getSharedPreferences("vynetic_settings", 0)
-                .getString("quality", "Auto (terbaik tersedia)") ?: "Auto (terbaik tersedia)"
-            val streamUrl = withContext(Dispatchers.IO) {
-                InnerTubeRepository.resolveAudioUrl(track.url, quality)
-            }
-            val metadata = MediaMetadata.Builder()
-                .setTitle(track.title)
-                .setArtist(track.artist)
-                .setArtworkUri(track.thumbnail.takeIf { it.isNotBlank() }?.let(Uri::parse))
-                .build()
-            val item = MediaItem.Builder()
-                .setUri(streamUrl)
-                .setMediaMetadata(metadata)
-                .build()
+            try {
+                status = "Menyiapkan audio…"
+                val quality = getSharedPreferences("vynetic_settings", 0)
+                    .getString("quality", "Auto (terbaik tersedia)") ?: "Auto (terbaik tersedia)"
+                val streamUrl = withContext(Dispatchers.IO) {
+                    InnerTubeRepository.resolveAudioUrl(track.url, quality)
+                }
+                val metadata = MediaMetadata.Builder()
+                    .setTitle(track.title)
+                    .setArtist(track.artist)
+                    .setArtworkUri(track.thumbnail.takeIf { it.isNotBlank() }?.let(Uri::parse))
+                    .build()
+                val item = MediaItem.Builder()
+                    .setUri(streamUrl)
+                    .setMediaMetadata(metadata)
+                    .build()
 
-            val player = controller ?: error("Player belum tersambung. Tutup lalu buka aplikasi lagi.")
-            player.setMediaItem(item)
-            player.prepare()
-            player.play()
-            currentTrack = track
-            status = "Sedang diputar"
-        }.invokeOnCompletion { error ->
-            if (error != null) {
+                val player = controller
+                if (player == null) {
+                    status = "Player belum tersambung. Sedang menghubungkan..."
+                    return@launch
+                }
+                player.setMediaItem(item)
+                player.prepare()
+                player.play()
+                currentTrack = track
+                status = "Sedang diputar"
+            } catch (error: Throwable) {
                 status = when {
                     error.message?.contains("age", true) == true -> "Konten ini memiliki batasan usia/wilayah."
                     else -> "Tidak dapat memutar lagu: ${error.message ?: "sumber sedang bermasalah"}"
