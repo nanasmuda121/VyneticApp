@@ -1,0 +1,5 @@
+VYNETIC third-party notices
+InnerTubeX (if adopted in a future build) — GPL-3.0: https://github.com/MetrolistGroup/innertubex
+AndroidX Media3 — Apache-2.0
+OkHttp — Apache-2.0
+Coil — Apache-2.0
