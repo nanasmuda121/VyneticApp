@@ -28,6 +28,16 @@ android {
             excludes += "META-INF/INDEX.LIST"
         }
     }
+    buildTypes {
+        release {
+            isMinifyEnabled = false
+            signingConfig = signingConfigs.getByName("debug")
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
+        }
+    }
     buildFeatures { compose = true }
 }
 

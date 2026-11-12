@@ -3,8 +3,12 @@ name: Build APK
 on:
   push:
     branches: [ main, master ]
+    tags: [ 'v*' ]
   pull_request:
   workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   build:
@@ -22,26 +26,51 @@ jobs:
 
       - name: Install Android platform & build-tools
         run: |
-          # Gunakan SDK yang sudah pre-installed di runner GitHub
           ANDROID_SDK_ROOT="${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}"
           echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT" >> $GITHUB_ENV
           echo "ANDROID_HOME=$ANDROID_SDK_ROOT" >> $GITHUB_ENV
-          # Accept licenses dan install packages yang dibutuhkan
           yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --licenses || true
           $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager "platforms;android-36" "build-tools;35.0.0"
 
-      # Memakai Gradle 8.13 langsung, jadi tidak butuh gradlew / gradle-wrapper.jar
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: "8.13"
 
-      - name: Build debug APK
-        run: gradle assembleDebug --stacktrace
+      - name: Build APKs (Debug & Release)
+        run: gradle assembleDebug assembleRelease --stacktrace
 
-      - name: Upload APK
+      - name: Prepare Release Asset
+        run: |
+          mkdir -p release-assets
+          cp app/build/outputs/apk/release/app-release.apk release-assets/VyneticApp-release.apk
+          cp app/build/outputs/apk/release/app-release.apk release-assets/app-release.apk
+
+      - name: Upload Debug APK
         uses: actions/upload-artifact@v4
         with:
           name: Vynetic-debug-apk
           path: app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
+
+      - name: Upload Release APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Vynetic-release-apk
+          path: release-assets/*.apk
+          if-no-files-found: error
+
+      - name: Create GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: release-assets/*.apk
+          name: Vynetic ${{ github.ref_name }}
+          body: |
+            ### Vynetic Music Player ${{ github.ref_name }} (Release)
+            - **Design**: Liquid Glass Monochrome Abu-Abu Hitam
+            - **Audio Engine**: NewPipeExtractor v0.27.1 Core Resolver
+            - **Branding**: Custom Official Logo & Adaptive App Icons
+            - **Platform**: Universal Signed Release APK (Android 8.0+)
+          draft: false
+          prerelease: false
