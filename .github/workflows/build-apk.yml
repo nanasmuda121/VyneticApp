@@ -28,7 +28,7 @@ jobs:
           echo "ANDROID_HOME=$ANDROID_SDK_ROOT" >> $GITHUB_ENV
           # Accept licenses dan install packages yang dibutuhkan
           yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --licenses || true
-          $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager "platforms;android-36" "build-tools;36.0.0"
+          $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager "platforms;android-37" "build-tools;36.0.0"
 
       # Memakai Gradle 8.13 langsung, jadi tidak butuh gradlew / gradle-wrapper.jar
       - name: Set up Gradle

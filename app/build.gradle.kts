@@ -6,12 +6,12 @@ plugins {
 
 android {
     namespace = "com.vynetic.music"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "com.vynetic.music"
         minSdk = 26
-        targetSdk = 36
+        targetSdk = 37
         versionCode = 6
         versionName = "1.00"
     }
