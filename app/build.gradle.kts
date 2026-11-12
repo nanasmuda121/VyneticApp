@@ -6,12 +6,12 @@ plugins {
 
 android {
     namespace = "com.vynetic.music"
-    compileSdk = 37
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.vynetic.music"
         minSdk = 26
-        targetSdk = 37
+        targetSdk = 36
         versionCode = 6
         versionName = "1.00"
     }
@@ -28,10 +28,10 @@ kotlin {
 }
 
 dependencies {
-    implementation(platform("androidx.compose:compose-bom:2026.09.00"))
-    implementation("androidx.activity:activity-compose:1.10.1")
-    implementation("androidx.core:core-ktx:1.17.0")
-    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.9.4")
+    implementation(platform("androidx.compose:compose-bom:2025.05.00"))
+    implementation("androidx.activity:activity-compose:1.9.3")
+    implementation("androidx.core:core-ktx:1.15.0")
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.7")
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-tooling-preview")
     implementation("androidx.compose.foundation:foundation")
