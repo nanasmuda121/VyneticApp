@@ -44,5 +44,5 @@ dependencies {
     implementation("androidx.media3:media3-session:1.11.1")
     implementation("com.google.guava:guava:33.4.8-android")
 
-    implementation("com.squareup.okhttp3:okhttp:5.5.1")
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
 }
