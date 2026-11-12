@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Vynetic</string>
+    <string name="playback_channel_name">Pemutaran Musik</string>
+    <string name="playback_channel_description">Kontrol dan status pemutaran lagu</string>
+</resources>

@@ -69,6 +69,8 @@ class MainActivity : ComponentActivity() {
         private set
     var durationMs by mutableLongStateOf(0L)
         private set
+    var lastCrashReport by mutableStateOf<String?>(null)
+        private set
 
     private var queue: List<Track> = emptyList()
     private var queueIndex = -1
@@ -76,44 +78,35 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        // Read previous crash if any
+        runCatching {
+            val savedCrash = getSharedPreferences("vynetic_prefs", 0).getString("last_crash", null)
+            if (!savedCrash.isNullOrBlank()) {
+                lastCrashReport = savedCrash
+            }
+        }
+
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
             if (checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
                 requestPermissions(arrayOf(android.Manifest.permission.POST_NOTIFICATIONS), 101)
             }
         }
 
-        val token = SessionToken(this, ComponentName(this, PlaybackService::class.java))
-        val future = MediaController.Builder(this, token).buildAsync()
-        controllerFuture = future
-        future.addListener({
-            runCatching {
-                controller = future.get()
-                controller?.addListener(object : Player.Listener {
-                    override fun onIsPlayingChanged(isPlaying: Boolean) {
-                        playing = isPlaying
-                    }
-                    override fun onPlaybackStateChanged(playbackState: Int) {
-                        if (playbackState == Player.STATE_READY) {
-                            durationMs = controller?.duration?.coerceAtLeast(0L) ?: 0L
-                        }
-                        if (playbackState == Player.STATE_ENDED) next()
-                    }
-                    override fun onPlayerError(error: androidx.media3.common.PlaybackException) {
-                        status = "Error pemutaran: ${error.message ?: "gagal memuat audio"}"
-                        playing = false
-                    }
-                })
-            }.onFailure { status = "Player belum siap: ${it.message ?: "error"}" }
-        }, { command -> runOnUiThread(command) })
+        connectController()
 
         lifecycleScope.launch(Dispatchers.IO) {
             runCatching { InnerTubeRepository.initialize() }
         }
+
         lifecycleScope.launch {
             while (true) {
-                controller?.let { player ->
-                    positionMs = player.currentPosition.coerceAtLeast(0L)
-                    durationMs = player.duration.takeIf { it > 0L } ?: 0L
+                runCatching {
+                    controller?.let { player ->
+                        if (player.playbackState != Player.STATE_IDLE) {
+                            positionMs = player.currentPosition.coerceAtLeast(0L)
+                            durationMs = player.duration.takeIf { it > 0L } ?: 0L
+                        }
+                    }
                 }
                 delay(500)
             }
@@ -122,10 +115,54 @@ class MainActivity : ComponentActivity() {
         setContent { VyneticRoot(this) }
     }
 
+    private fun connectController() {
+        if (controller != null) return
+        try {
+            val token = SessionToken(this, ComponentName(this, PlaybackService::class.java))
+            val future = MediaController.Builder(this, token).buildAsync()
+            controllerFuture = future
+            future.addListener({
+                runCatching {
+                    controller = future.get()
+                    controller?.addListener(object : Player.Listener {
+                        override fun onIsPlayingChanged(isPlaying: Boolean) {
+                            playing = isPlaying
+                        }
+                        override fun onPlaybackStateChanged(playbackState: Int) {
+                            runCatching {
+                                if (playbackState == Player.STATE_READY) {
+                                    durationMs = controller?.duration?.coerceAtLeast(0L) ?: 0L
+                                }
+                                if (playbackState == Player.STATE_ENDED) next()
+                            }
+                        }
+                        override fun onPlayerError(error: androidx.media3.common.PlaybackException) {
+                            status = "Error pemutaran: ${error.message ?: "gagal memuat audio"}"
+                            playing = false
+                        }
+                    })
+                }.onFailure { status = "Player belum siap: ${it.message ?: "error"}" }
+            }, { command -> runOnUiThread(command) })
+        } catch (t: Throwable) {
+            status = "Koneksi player gagal: ${t.message}"
+        }
+    }
+
+    fun dismissCrashNotice() {
+        lastCrashReport = null
+        runCatching {
+            getSharedPreferences("vynetic_prefs", 0).edit().remove("last_crash").apply()
+        }
+    }
+
     fun play(track: Track, newQueue: List<Track> = listOf(track)) {
-        queue = newQueue.ifEmpty { listOf(track) }
-        queueIndex = queue.indexOfFirst { it.url == track.url }.coerceAtLeast(0)
-        playResolved(track)
+        runCatching {
+            queue = newQueue.ifEmpty { listOf(track) }
+            queueIndex = queue.indexOfFirst { it.url == track.url }.coerceAtLeast(0)
+            playResolved(track)
+        }.onFailure {
+            status = "Gagal memutar: ${it.message ?: "kesalahan tidak terduga"}"
+        }
     }
 
     private fun playResolved(track: Track) {
@@ -140,7 +177,6 @@ class MainActivity : ComponentActivity() {
                 val metadata = MediaMetadata.Builder()
                     .setTitle(track.title)
                     .setArtist(track.artist)
-                    .setArtworkUri(track.thumbnail.takeIf { it.isNotBlank() }?.let(Uri::parse))
                     .build()
                 val item = MediaItem.Builder()
                     .setUri(streamUrl)
@@ -149,14 +185,15 @@ class MainActivity : ComponentActivity() {
 
                 val player = controller
                 if (player == null) {
-                    status = "Player belum tersambung. Sedang menghubungkan..."
+                    status = "Player belum tersambung. Mencoba menyambungkan kembali..."
+                    connectController()
                     return@launch
                 }
                 player.setMediaItem(item)
                 player.prepare()
                 player.play()
                 currentTrack = track
-                status = "Sedang diputar"
+                status = "Sedang diputar: ${track.title}"
             } catch (error: Throwable) {
                 status = when {
                     error.message?.contains("age", true) == true -> "Konten ini memiliki batasan usia/wilayah."
@@ -313,6 +350,31 @@ private fun VyneticApp(activity: MainActivity) {
             }
 
             Column(Modifier.weight(1f).padding(horizontal = 18.dp)) {
+                activity.lastCrashReport?.let { crashText ->
+                    Surface(
+                        modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
+                        shape = RoundedCornerShape(16.dp),
+                        color = Color(0xFF2A1515)
+                    ) {
+                        Column(Modifier.padding(14.dp)) {
+                            Text("⚠️ Terdeteksi Crash Sebelumnya", color = Color(0xFFFF8B8B), fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                            Text(
+                                crashText.lines().take(4).joinToString("\n"),
+                                color = Color(0xFFE0E0E0),
+                                fontSize = 10.sp,
+                                modifier = Modifier.padding(vertical = 6.dp)
+                            )
+                            Button(
+                                onClick = { activity.dismissCrashNotice() },
+                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6B2020)),
+                                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
+                            ) {
+                                Text("Tutup Peringatan", fontSize = 11.sp, color = Color.White)
+                            }
+                        }
+                    }
+                }
+
                 Text(
                     when (tab) { 2 -> "Your favorites"; 1 -> "Search music"; else -> "Discover your sound" },
                     fontSize = 27.sp, fontWeight = FontWeight.Bold, color = Color(0xFF202329)
@@ -413,7 +475,10 @@ private fun VyneticApp(activity: MainActivity) {
                                     } else favorites + track
                                     saveFavorites(activity, favorites)
                                 },
-                                onPlay = { activity.play(track, shownTracks) }
+                                onPlay = {
+                                    runCatching { activity.play(track, shownTracks) }
+                                        .onFailure { activity.status = "Gagal memutar: ${it.message}" }
+                                }
                             )
                         }
                     }
