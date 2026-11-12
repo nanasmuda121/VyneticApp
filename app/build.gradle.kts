@@ -12,8 +12,8 @@ android {
         applicationId = "com.vynetic.music"
         minSdk = 26
         targetSdk = 36
-        versionCode = 8
-        versionName = "1.03"
+        versionCode = 9
+        versionName = "1.04"
     }
 
     compileOptions {

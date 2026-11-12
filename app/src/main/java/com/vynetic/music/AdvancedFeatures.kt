@@ -94,13 +94,14 @@ fun AdvancedFeatures(
                         fontWeight = FontWeight.Bold
                     )
                     Surface(
-                        color = Color(0x2238BDF8),
-                        shape = RoundedCornerShape(12.dp)
+                        color = Color(0x1FFFFFFF),
+                        shape = RoundedCornerShape(12.dp),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0x33FFFFFF))
                     ) {
                         Text(
                             "VYNETIC HD",
                             Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
-                            color = VyneticPrimary,
+                            color = Color(0xFFE2E8F0),
                             fontWeight = FontWeight.Black,
                             fontSize = 10.sp,
                             letterSpacing = 1.sp

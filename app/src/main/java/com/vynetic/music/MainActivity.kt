@@ -46,14 +46,15 @@ import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
 
-// Ultra-modern midnight dark theme
-val VyneticBg = Color(0xFF090B10)
-val VyneticSurface = Color(0xFF101622)
-val VyneticCard = Color(0xFF141A26)
-val VyneticPrimary = Color(0xFF38BDF8)
-val VyneticSecondary = Color(0xFF818CF8)
-val VyneticText = Color(0xFFF8FAFC)
-val VyneticMuted = Color(0xFF94A3B8)
+// Authentic Liquid Glass - Grey & Black (Abu-Abu & Hitam) Palette
+val VyneticBg = Color(0xFF0B0D11)
+val VyneticSurface = Color(0xFF13161C)
+val VyneticCard = Color(0xFF181C24)
+val VyneticPrimary = Color(0xFFF1F5F9) // Polished Titanium White
+val VyneticSecondary = Color(0xFF94A3B8) // Chrome Grey
+val VyneticAccent = Color(0xFF64748B) // Slate Smoke
+val VyneticText = Color(0xFFFFFFFF)
+val VyneticMuted = Color(0xFFA1AAB7)
 val VyneticPink = Color(0xFFFB7185)
 
 // Aliases for compatibility
@@ -295,7 +296,7 @@ class MainActivity : ComponentActivity() {
 private fun VyneticRoot(activity: MainActivity) {
     var showSplash by remember { mutableStateOf(true) }
     LaunchedEffect(Unit) {
-        delay(1200)
+        delay(1100)
         showSplash = false
     }
     if (showSplash) VyneticSplash() else VyneticApp(activity)
@@ -305,8 +306,8 @@ private fun VyneticRoot(activity: MainActivity) {
 private fun VyneticSplash() {
     val infinite = rememberInfiniteTransition(label = "splash")
     val glow by infinite.animateFloat(
-        initialValue = 0.35f, targetValue = 0.9f,
-        animationSpec = infiniteRepeatable(tween(900, easing = FastOutSlowInEasing), RepeatMode.Reverse),
+        initialValue = 0.35f, targetValue = 0.85f,
+        animationSpec = infiniteRepeatable(tween(850, easing = FastOutSlowInEasing), RepeatMode.Reverse),
         label = "glow"
     )
     val bars = listOf(16, 32, 48, 28, 56, 36, 22, 44, 30, 18)
@@ -314,7 +315,7 @@ private fun VyneticSplash() {
     Box(
         Modifier.fillMaxSize().background(
             Brush.radialGradient(
-                colors = listOf(Color(0xFF142033), Color(0xFF090D14), Color(0xFF040608)),
+                colors = listOf(Color(0xFF222733), Color(0xFF11141A), Color(0xFF07080A)),
                 radius = 700f
             )
         ), contentAlignment = Alignment.Center
@@ -322,15 +323,19 @@ private fun VyneticSplash() {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Box(
                 Modifier.size(100.dp).clip(RoundedCornerShape(30.dp))
-                    .background(Brush.linearGradient(listOf(Color(0xFF38BDF8), Color(0xFF1D4ED8), Color(0xFF0F172A))))
-                    .border(1.5.dp, Color.White.copy(alpha = glow * 0.7f), RoundedCornerShape(30.dp)),
+                    .background(
+                        Brush.linearGradient(
+                            listOf(Color(0xFF374151), Color(0xFF1F242D), Color(0xFF0F1115))
+                        )
+                    )
+                    .border(1.5.dp, Color.White.copy(alpha = glow * 0.75f), RoundedCornerShape(30.dp)),
                 contentAlignment = Alignment.Center
             ) {
                 Text("V", color = Color.White, fontSize = 62.sp, fontWeight = FontWeight.Black)
             }
             Spacer(Modifier.height(20.dp))
             Text("VYNETIC", color = Color.White, fontSize = 28.sp, fontWeight = FontWeight.Black, letterSpacing = 8.sp)
-            Text("YOUR SOUND. YOUR SPACE.", color = VyneticPrimary, fontSize = 10.sp, letterSpacing = 2.5.sp, modifier = Modifier.padding(top = 6.dp))
+            Text("YOUR SOUND. YOUR SPACE.", color = VyneticSecondary, fontSize = 10.sp, letterSpacing = 2.5.sp, modifier = Modifier.padding(top = 6.dp))
 
             Row(
                 Modifier.padding(top = 26.dp).height(40.dp),
@@ -348,7 +353,11 @@ private fun VyneticSplash() {
                     Box(
                         Modifier.width(4.dp).height((height * animated).dp)
                             .clip(CircleShape)
-                            .background(Brush.verticalGradient(listOf(VyneticPrimary, VyneticSecondary)))
+                            .background(
+                                Brush.verticalGradient(
+                                    listOf(Color(0xFFE2E8F0), Color(0xFF475569))
+                                )
+                            )
                     )
                 }
             }
@@ -401,7 +410,7 @@ private fun VyneticApp(activity: MainActivity) {
         Column(
             Modifier.fillMaxSize().background(
                 Brush.verticalGradient(
-                    listOf(Color(0xFF0F1522), Color(0xFF0A0D14), Color(0xFF06080C))
+                    listOf(Color(0xFF161921), Color(0xFF0F1116), Color(0xFF08090C))
                 )
             )
         ) {
@@ -412,7 +421,12 @@ private fun VyneticApp(activity: MainActivity) {
             ) {
                 Box(
                     Modifier.size(42.dp).clip(RoundedCornerShape(13.dp))
-                        .background(Brush.linearGradient(listOf(Color(0xFF38BDF8), Color(0xFF2563EB)))),
+                        .background(
+                            Brush.linearGradient(
+                                listOf(Color(0xFF475569), Color(0xFF1E242E), Color(0xFF0F1115))
+                            )
+                        )
+                        .border(1.dp, Color(0x66FFFFFF), RoundedCornerShape(13.dp)),
                     contentAlignment = Alignment.Center
                 ) {
                     Text("V", color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.Black)
@@ -420,14 +434,20 @@ private fun VyneticApp(activity: MainActivity) {
                 Spacer(Modifier.width(12.dp))
                 Column(Modifier.weight(1f)) {
                     Text("VYNETIC", fontSize = 20.sp, fontWeight = FontWeight.Black, color = Color.White, letterSpacing = 3.sp)
-                    Text("YOUR SOUND. YOUR SPACE.", fontSize = 9.sp, color = VyneticMuted, letterSpacing = 1.5.sp)
+                    Text("YOUR SOUND. YOUR SPACE.", fontSize = 9.sp, color = VyneticSecondary, letterSpacing = 1.5.sp)
                 }
                 Surface(
-                    color = Color(0x2238BDF8),
-                    shape = CircleShape
+                    color = Color(0x22FFFFFF),
+                    shape = CircleShape,
+                    border = androidx.compose.foundation.BorderStroke(1.dp, Color(0x33FFFFFF))
                 ) {
-                    Text("v1.02 · PRO", Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                        color = VyneticPrimary, fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                    Text(
+                        "v1.04 · LIQUID",
+                        Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                        color = Color(0xFFE2E8F0),
+                        fontSize = 9.sp,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
             }
 
@@ -437,7 +457,8 @@ private fun VyneticApp(activity: MainActivity) {
                     Surface(
                         modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
                         shape = RoundedCornerShape(16.dp),
-                        color = Color(0xFF2E1318)
+                        color = Color(0xFF22171A),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0x44FB7185))
                     ) {
                         Column(Modifier.padding(14.dp)) {
                             Text("⚠️ Terdeteksi Crash Sebelumnya", color = Color(0xFFFF7185), fontWeight = FontWeight.Bold, fontSize = 13.sp)
@@ -449,7 +470,7 @@ private fun VyneticApp(activity: MainActivity) {
                             )
                             Button(
                                 onClick = { activity.dismissCrashNotice() },
-                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF881337)),
+                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4C1D24)),
                                 contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
                             ) {
                                 Text("Tutup Peringatan", fontSize = 11.sp, color = Color.White)
@@ -472,19 +493,19 @@ private fun VyneticApp(activity: MainActivity) {
                             .vyneticGlass(RoundedCornerShape(16.dp)).padding(start = 12.dp, end = 6.dp, top = 4.dp, bottom = 4.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Icon(Icons.Rounded.Search, null, tint = VyneticPrimary)
+                        Icon(Icons.Rounded.Search, null, tint = Color(0xFFCBD5E1))
                         TextField(
                             value = query,
                             onValueChange = { query = it },
                             modifier = Modifier.weight(1f),
-                            placeholder = { Text("Cari lagu, artis, atau judul…", color = VyneticMuted, fontSize = 13.sp) },
+                            placeholder = { Text("Cari lagu, artis, atau judul…", color = Color(0xFF64748B), fontSize = 13.sp) },
                             singleLine = true,
                             colors = TextFieldDefaults.colors(
                                 focusedContainerColor = Color.Transparent,
                                 unfocusedContainerColor = Color.Transparent,
                                 focusedIndicatorColor = Color.Transparent,
                                 unfocusedIndicatorColor = Color.Transparent,
-                                cursorColor = VyneticPrimary,
+                                cursorColor = Color.White,
                                 focusedTextColor = Color.White,
                                 unfocusedTextColor = Color.White
                             )
@@ -510,15 +531,16 @@ private fun VyneticApp(activity: MainActivity) {
                             },
                             enabled = !loading && query.isNotBlank(),
                             shape = RoundedCornerShape(12.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = VyneticPrimary),
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2A313C)),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, Color(0x4DFFFFFF)),
                             contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp)
                         ) {
-                            if (loading) CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp, color = Color(0xFF0A0D14))
-                            else Text("Cari", fontWeight = FontWeight.Bold, color = Color(0xFF0A0D14), fontSize = 12.sp)
+                            if (loading) CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp, color = Color.White)
+                            else Text("Cari", fontWeight = FontWeight.Bold, color = Color.White, fontSize = 12.sp)
                         }
                     }
 
-                    // Interactive genre chips
+                    // Interactive genre chips in liquid glass
                     Row(
                         Modifier.fillMaxWidth().padding(top = 10.dp, bottom = 10.dp).horizontalScroll(rememberScrollState()),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -551,13 +573,17 @@ private fun VyneticApp(activity: MainActivity) {
                                         loading = false
                                     }
                                 },
-                                color = if (isSelected) VyneticPrimary else Color(0x221E293B),
-                                shape = CircleShape
+                                color = if (isSelected) Color(0xFF333C4A) else Color(0x221B1E26),
+                                shape = CircleShape,
+                                border = androidx.compose.foundation.BorderStroke(
+                                    width = 1.dp,
+                                    color = if (isSelected) Color(0x99FFFFFF) else Color(0x1FFFFFFF)
+                                )
                             ) {
                                 Text(
                                     genre,
                                     Modifier.padding(horizontal = 14.dp, vertical = 7.dp),
-                                    color = if (isSelected) Color(0xFF0A0D14) else Color(0xFFCBD5E1),
+                                    color = if (isSelected) Color.White else Color(0xFF94A3B8),
                                     fontSize = 12.sp,
                                     fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
                                 )
@@ -578,14 +604,14 @@ private fun VyneticApp(activity: MainActivity) {
 
                 if (loading && shownTracks.isEmpty()) {
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator(color = VyneticPrimary)
+                        CircularProgressIndicator(color = Color.White)
                     }
                 } else if (shownTracks.isEmpty()) {
                     Column(
                         Modifier.fillMaxWidth().padding(top = 50.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Text(if (tab == 2) "♡" else "♫", color = VyneticPrimary, fontSize = 52.sp)
+                        Text(if (tab == 2) "♡" else "♫", color = Color(0xFF94A3B8), fontSize = 52.sp)
                         Spacer(Modifier.height(8.dp))
                         Text(
                             if (tab == 2) "Belum ada lagu favorit tersimpan" else "Pilih genre atau ketik pencarian musik",
@@ -626,7 +652,7 @@ private fun VyneticApp(activity: MainActivity) {
                 }
             }
 
-            // Floating MiniPlayer
+            // Floating MiniPlayer in dark liquid glass
             activity.currentTrack?.let { track ->
                 MiniPlayer(
                     track = track,
@@ -659,8 +685,8 @@ private fun VyneticApp(activity: MainActivity) {
                 )
             }
 
-            // Bottom Navigation Bar
-            NavigationBar(containerColor = Color(0xFF0C1018), tonalElevation = 0.dp) {
+            // Bottom Navigation Bar in liquid smoke
+            NavigationBar(containerColor = Color(0xFA0E1015), tonalElevation = 0.dp) {
                 NavigationBarItem(
                     selected = tab == 0, onClick = { tab = 0 },
                     icon = { Icon(Icons.Rounded.Home, contentDescription = "Home") },
@@ -700,21 +726,22 @@ private fun TrackRow(
             .padding(10.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Thumbnail with rounded frame
+        // Thumbnail with rounded frame & specular border
         AsyncImage(
             model = track.thumbnail,
             contentDescription = null,
             modifier = Modifier.size(54.dp).clip(RoundedCornerShape(12.dp))
-                .background(Color(0xFF1E293B))
+                .background(Color(0xFF1E222A))
+                .border(1.dp, Color(0x22FFFFFF), RoundedCornerShape(12.dp))
         )
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f)) {
             Text(
                 track.title,
-                color = if (isCurrent) VyneticPrimary else Color.White,
+                color = if (isCurrent) Color(0xFFFFFFFF) else Color(0xFFE2E8F0),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
-                fontWeight = FontWeight.SemiBold,
+                fontWeight = if (isCurrent) FontWeight.Bold else FontWeight.SemiBold,
                 fontSize = 14.sp
             )
             Text(
@@ -749,14 +776,15 @@ private fun TrackRow(
         } else {
             Surface(
                 modifier = Modifier.size(36.dp).clip(CircleShape).clickable(onClick = onPlay),
-                color = if (isCurrent) VyneticPrimary else Color(0x2238BDF8),
-                shape = CircleShape
+                color = if (isCurrent) Color(0xFF333C4A) else Color(0x22FFFFFF),
+                shape = CircleShape,
+                border = androidx.compose.foundation.BorderStroke(1.dp, Color(0x44FFFFFF))
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Icon(
                         Icons.Rounded.PlayArrow,
                         contentDescription = "Putar",
-                        tint = if (isCurrent) Color(0xFF0A0D14) else VyneticPrimary,
+                        tint = Color.White,
                         modifier = Modifier.size(20.dp)
                     )
                 }
@@ -769,17 +797,17 @@ private fun TrackRow(
 private fun LiveEqualizerBars() {
     val infinite = rememberInfiniteTransition(label = "eq_bars")
     val h1 by infinite.animateFloat(
-        initialValue = 0.2f, targetValue = 1f,
+        initialValue = 0.25f, targetValue = 1f,
         animationSpec = infiniteRepeatable(tween(420, easing = FastOutSlowInEasing), RepeatMode.Reverse),
         label = "h1"
     )
     val h2 by infinite.animateFloat(
-        initialValue = 0.8f, targetValue = 0.25f,
+        initialValue = 0.85f, targetValue = 0.25f,
         animationSpec = infiniteRepeatable(tween(350, easing = FastOutSlowInEasing), RepeatMode.Reverse),
         label = "h2"
     )
     val h3 by infinite.animateFloat(
-        initialValue = 0.4f, targetValue = 0.95f,
+        initialValue = 0.35f, targetValue = 0.95f,
         animationSpec = infiniteRepeatable(tween(480, easing = FastOutSlowInEasing), RepeatMode.Reverse),
         label = "h3"
     )
@@ -789,9 +817,9 @@ private fun LiveEqualizerBars() {
         horizontalArrangement = Arrangement.spacedBy(3.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Box(Modifier.width(3.dp).height((22 * h1).dp).clip(CircleShape).background(VyneticPrimary))
-        Box(Modifier.width(3.dp).height((22 * h2).dp).clip(CircleShape).background(VyneticPrimary))
-        Box(Modifier.width(3.dp).height((22 * h3).dp).clip(CircleShape).background(VyneticPrimary))
+        Box(Modifier.width(3.dp).height((22 * h1).dp).clip(CircleShape).background(Color(0xFFE2E8F0)))
+        Box(Modifier.width(3.dp).height((22 * h2).dp).clip(CircleShape).background(Color(0xFFE2E8F0)))
+        Box(Modifier.width(3.dp).height((22 * h3).dp).clip(CircleShape).background(Color(0xFFE2E8F0)))
     }
 }
 
@@ -812,13 +840,13 @@ private fun MiniPlayer(
         Modifier.fillMaxWidth().clickable(onClick = onOpen).padding(horizontal = 14.dp, vertical = 6.dp)
             .clip(RoundedCornerShape(18.dp)).vyneticGlass(RoundedCornerShape(18.dp), active = true)
     ) {
-        // Thin progress indicator on top of mini player
+        // Thin liquid specular progress line on top of mini player
         val progress = if (duration > 0) (position.toFloat() / duration.toFloat()).coerceIn(0f, 1f) else 0f
         LinearProgressIndicator(
             progress = { progress },
-            modifier = Modifier.fillMaxWidth().height(2.5.dp),
-            color = VyneticPrimary,
-            trackColor = Color(0x33FFFFFF)
+            modifier = Modifier.fillMaxWidth().height(2.dp),
+            color = Color(0xFFCBD5E1),
+            trackColor = Color(0x22FFFFFF)
         )
 
         Row(
@@ -828,7 +856,8 @@ private fun MiniPlayer(
             AsyncImage(
                 model = track.thumbnail,
                 contentDescription = null,
-                modifier = Modifier.size(44.dp).clip(RoundedCornerShape(10.dp)).background(Color(0xFF1E293B))
+                modifier = Modifier.size(44.dp).clip(RoundedCornerShape(10.dp)).background(Color(0xFF1E222A))
+                    .border(1.dp, Color(0x33FFFFFF), RoundedCornerShape(10.dp))
             )
             Spacer(Modifier.width(10.dp))
             Column(Modifier.weight(1f)) {
@@ -853,15 +882,15 @@ private fun MiniPlayer(
             }
             IconButton(
                 onClick = onToggle,
-                modifier = Modifier.size(38.dp).clip(CircleShape).background(VyneticPrimary)
+                modifier = Modifier.size(38.dp).clip(CircleShape).background(Color(0xFFFFFFFF))
             ) {
                 if (buffering) {
-                    CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp, color = Color(0xFF0A0D14))
+                    CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp, color = Color(0xFF0F1115))
                 } else {
                     Icon(
                         imageVector = if (playing) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
                         contentDescription = if (playing) "Jeda" else "Putar",
-                        tint = Color(0xFF0A0D14),
+                        tint = Color(0xFF0F1115),
                         modifier = Modifier.size(24.dp)
                     )
                 }
@@ -875,9 +904,9 @@ private fun MiniPlayer(
 
 @Composable
 private fun navColors() = NavigationBarItemDefaults.colors(
-    selectedIconColor = VyneticPrimary,
-    selectedTextColor = VyneticPrimary,
-    indicatorColor = Color(0x2238BDF8),
+    selectedIconColor = Color.White,
+    selectedTextColor = Color.White,
+    indicatorColor = Color(0x22FFFFFF),
     unselectedIconColor = Color(0xFF64748B),
     unselectedTextColor = Color(0xFF64748B)
 )
