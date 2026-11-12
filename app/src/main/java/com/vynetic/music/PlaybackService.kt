@@ -35,10 +35,17 @@ class PlaybackService : MediaSessionService() {
             setMediaNotificationProvider(notificationProvider)
         }
 
+        val defaultHeaders = mapOf(
+            "User-Agent" to NewPipeDownloader.USER_AGENT,
+            "Referer" to "https://www.youtube.com/",
+            "Origin" to "https://www.youtube.com"
+        )
+
         val dataSourceFactory = DefaultHttpDataSource.Factory()
-            .setUserAgent("com.google.android.youtube/20.01.35 (Linux; U; Android 11; id_ID)")
-            .setConnectTimeoutMs(15000)
-            .setReadTimeoutMs(20000)
+            .setUserAgent(NewPipeDownloader.USER_AGENT)
+            .setDefaultRequestProperties(defaultHeaders)
+            .setConnectTimeoutMs(20000)
+            .setReadTimeoutMs(25000)
             .setAllowCrossProtocolRedirects(true)
 
         val audioAttributes = AudioAttributes.Builder()
@@ -57,6 +64,10 @@ class PlaybackService : MediaSessionService() {
                 if (audioSessionId > 0) {
                     currentAudioSessionId = audioSessionId
                 }
+            }
+
+            override fun onPlayerError(error: androidx.media3.common.PlaybackException) {
+                Log.e("PlaybackService", "ExoPlayer error: [${error.errorCodeName}] ${error.message}", error)
             }
         })
 

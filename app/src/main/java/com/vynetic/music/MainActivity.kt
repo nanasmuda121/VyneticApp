@@ -4,6 +4,7 @@ import android.content.ComponentName
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.animation.core.*
@@ -103,7 +104,10 @@ class MainActivity : ComponentActivity() {
         connectController()
 
         lifecycleScope.launch(Dispatchers.IO) {
-            runCatching { InnerTubeRepository.initialize() }
+            runCatching {
+                InnerTubeRepository.initialize()
+                StreamResolver.ensureInitialized()
+            }
         }
 
         // Real-time position & duration polling
@@ -197,15 +201,16 @@ class MainActivity : ComponentActivity() {
     private fun playResolved(track: Track) {
         lifecycleScope.launch {
             try {
+                buffering = true
                 currentTrack = track
                 status = "Memuat audio stream…"
                 val quality = getSharedPreferences("vynetic_settings", 0)
                     .getString("quality", "Auto (terbaik tersedia)") ?: "Auto (terbaik tersedia)"
-                val streamUrl = withContext(Dispatchers.IO) {
-                    InnerTubeRepository.resolveAudioUrl(track.url, quality)
+                val resolved = withContext(Dispatchers.IO) {
+                    StreamResolver.resolve(track.url, quality)
                 }
 
-                val mimeType = if (streamUrl.contains("audio%2Fwebm") || streamUrl.contains("audio/webm")) {
+                val mimeType = if (resolved.mimeType.contains("webm")) {
                     MimeTypes.AUDIO_WEBM
                 } else {
                     MimeTypes.AUDIO_MP4
@@ -216,7 +221,7 @@ class MainActivity : ComponentActivity() {
                     .setArtist(track.artist)
                     .build()
                 val item = MediaItem.Builder()
-                    .setUri(streamUrl)
+                    .setUri(resolved.url)
                     .setMimeType(mimeType)
                     .setMediaMetadata(metadata)
                     .build()
@@ -243,6 +248,7 @@ class MainActivity : ComponentActivity() {
                 }
             } catch (error: Throwable) {
                 buffering = false
+                Log.e("MainActivity", "Gagal memutar lagu", error)
                 status = when {
                     error.message?.contains("age", true) == true -> "Konten ini memiliki batasan usia/wilayah."
                     else -> "Gagal memutar: ${error.message ?: "sumber tidak merespons"}"

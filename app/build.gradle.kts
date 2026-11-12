@@ -12,13 +12,21 @@ android {
         applicationId = "com.vynetic.music"
         minSdk = 26
         targetSdk = 36
-        versionCode = 9
-        versionName = "1.04"
+        versionCode = 10
+        versionName = "1.05"
     }
 
     compileOptions {
+        isCoreLibraryDesugaringEnabled = true
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
+    }
+    packaging {
+        resources {
+            excludes += "/META-INF/{AL2.0,LGPL2.1}"
+            excludes += "META-INF/DEPENDENCIES"
+            excludes += "META-INF/INDEX.LIST"
+        }
     }
     buildFeatures { compose = true }
 }
@@ -28,6 +36,9 @@ kotlin {
 }
 
 dependencies {
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs_nio:2.1.5")
+    implementation("com.github.teamnewpipe:NewPipeExtractor:v0.27.1")
+
     implementation(platform("androidx.compose:compose-bom:2025.05.00"))
     implementation("androidx.activity:activity-compose:1.9.3")
     implementation("androidx.core:core-ktx:1.15.0")
