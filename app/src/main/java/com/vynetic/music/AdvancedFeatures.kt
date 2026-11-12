@@ -1,10 +1,13 @@
 package com.vynetic.music
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -29,7 +32,9 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import coil.compose.AsyncImage
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -260,28 +265,11 @@ fun AdvancedFeatures(
                     }
 
                     "Lirik" -> {
-                        Spacer(Modifier.height(14.dp))
-                        Text(track.title, color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold)
-                        Text(track.artist, color = VyneticMuted)
-                        Spacer(Modifier.height(20.dp))
-                        Box(
-                            Modifier.fillMaxWidth().weight(1f).clip(RoundedCornerShape(20.dp))
-                                .vyneticGlass(RoundedCornerShape(20.dp)).padding(24.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Text("♫", color = VyneticPrimary, fontSize = 52.sp)
-                                Spacer(Modifier.height(12.dp))
-                                Text("Lirik Belum Tersedia", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 17.sp)
-                                Spacer(Modifier.height(6.dp))
-                                Text(
-                                    "Fitur integrasi lirik tersinkronisasi otomatis akan hadir di pembaruan berikutnya.",
-                                    color = VyneticMuted,
-                                    fontSize = 12.sp,
-                                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
-                                )
-                            }
-                        }
+                        LyricsScreen(
+                            track = track,
+                            positionMs = position,
+                            onSeek = onSeek
+                        )
                     }
 
                     "Equalizer" -> {
@@ -581,4 +569,245 @@ private fun savePlaylists(activity: MainActivity, playlists: Map<String, List<Tr
         root.put(name, arr)
     }
     activity.getSharedPreferences("vynetic_library", 0).edit().putString("playlists", root.toString()).apply()
+}
+
+@Composable
+private fun LyricsScreen(
+    track: Track,
+    positionMs: Long,
+    onSeek: (Long) -> Unit
+) {
+    var lyricsResult by remember(track.url) { mutableStateOf<LyricsResult?>(null) }
+    var loading by remember(track.url) { mutableStateOf(true) }
+    var customQuery by remember(track.url) { mutableStateOf("") }
+    var isSearchingCustom by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+
+    LaunchedEffect(track.url) {
+        loading = true
+        lyricsResult = withContext(Dispatchers.IO) {
+            LyricsRepository.getLyrics(track.title, track.artist)
+        }
+        loading = false
+    }
+
+    Column(Modifier.fillMaxSize()) {
+        Spacer(Modifier.height(10.dp))
+        Row(
+            Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(Modifier.weight(1f)) {
+                Text(
+                    track.title,
+                    color = Color.White,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Text(
+                    track.artist,
+                    color = Color(0xFF94A3B8),
+                    fontSize = 12.sp,
+                    maxLines = 1
+                )
+            }
+            if (lyricsResult != null) {
+                Surface(
+                    color = if (lyricsResult!!.isSynced) Color(0x3322C55E) else Color(0x22FFFFFF),
+                    shape = RoundedCornerShape(10.dp),
+                    border = androidx.compose.foundation.BorderStroke(
+                        1.dp,
+                        if (lyricsResult!!.isSynced) Color(0x6622C55E) else Color(0x33FFFFFF)
+                    )
+                ) {
+                    Text(
+                        if (lyricsResult!!.isSynced) "KARAOKE SYNC" else "LIRIK TEKS",
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                        color = if (lyricsResult!!.isSynced) Color(0xFF86EFAC) else Color.White,
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 1.sp
+                    )
+                }
+            }
+        }
+
+        Spacer(Modifier.height(14.dp))
+
+        Box(
+            Modifier.fillMaxWidth().weight(1f).clip(RoundedCornerShape(20.dp))
+                .vyneticGlass(RoundedCornerShape(20.dp))
+                .padding(horizontal = 16.dp, vertical = 12.dp)
+        ) {
+            when {
+                loading -> {
+                    Column(
+                        Modifier.fillMaxSize(),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        CircularProgressIndicator(
+                            color = Color.White,
+                            modifier = Modifier.size(36.dp),
+                            strokeWidth = 3.dp
+                        )
+                        Spacer(Modifier.height(14.dp))
+                        Text(
+                            "Mencari lirik otomatis…",
+                            color = Color(0xFFCBD5E1),
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                }
+
+                lyricsResult != null && lyricsResult!!.isSynced && lyricsResult!!.lines.isNotEmpty() -> {
+                    val lines = lyricsResult!!.lines
+                    val activeIndex = lines.indexOfLast { it.timeMs <= positionMs }
+                    val listState = rememberLazyListState()
+
+                    LaunchedEffect(activeIndex) {
+                        if (activeIndex >= 0) {
+                            listState.animateScrollToItem((activeIndex - 2).coerceAtLeast(0))
+                        }
+                    }
+
+                    LazyColumn(
+                        state = listState,
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(vertical = 40.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        itemsIndexed(lines) { index, line ->
+                            val isActive = index == activeIndex
+                            val isPast = index < activeIndex
+
+                            val textColor = when {
+                                isActive -> Color.White
+                                isPast -> Color(0xFFCBD5E1)
+                                else -> Color(0xFF475569)
+                            }
+
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .clickable { onSeek(line.timeMs) }
+                                    .then(
+                                        if (isActive) {
+                                            Modifier
+                                                .background(
+                                                    Brush.linearGradient(
+                                                        listOf(Color(0x3DFFFFFF), Color(0x1AFFFFFF))
+                                                    )
+                                                )
+                                                .border(1.dp, Color(0x66FFFFFF), RoundedCornerShape(12.dp))
+                                                .padding(horizontal = 16.dp, vertical = 10.dp)
+                                        } else {
+                                            Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                                        }
+                                    )
+                            ) {
+                                Text(
+                                    text = line.text,
+                                    color = textColor,
+                                    fontSize = if (isActive) 20.sp else 16.sp,
+                                    fontWeight = if (isActive) FontWeight.ExtraBold else FontWeight.Medium,
+                                    lineHeight = if (isActive) 26.sp else 22.sp
+                                )
+                            }
+                        }
+                    }
+                }
+
+                lyricsResult != null && lyricsResult!!.plainText.isNotBlank() -> {
+                    val lines = lyricsResult!!.plainText.lines()
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(vertical = 20.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        items(lines) { lineText ->
+                            Text(
+                                lineText,
+                                color = Color(0xFFE2E8F0),
+                                fontSize = 16.sp,
+                                lineHeight = 24.sp,
+                                fontWeight = FontWeight.Normal
+                            )
+                        }
+                    }
+                }
+
+                else -> {
+                    Column(
+                        Modifier.fillMaxSize().padding(16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Text("♪", color = Color(0xFF64748B), fontSize = 48.sp)
+                        Spacer(Modifier.height(10.dp))
+                        Text(
+                            "Lirik Tidak Ditemukan",
+                            color = Color.White,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 17.sp
+                        )
+                        Spacer(Modifier.height(6.dp))
+                        Text(
+                            "Belum ada lirik untuk lagu ini di database LRCLIB.",
+                            color = Color(0xFF94A3B8),
+                            fontSize = 12.sp,
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                        )
+                        Spacer(Modifier.height(18.dp))
+
+                        OutlinedTextField(
+                            value = customQuery,
+                            onValueChange = { customQuery = it },
+                            placeholder = { Text("Ketik judul & nama artis…", fontSize = 12.sp, color = Color(0xFF64748B)) },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(12.dp),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedTextColor = Color.White,
+                                unfocusedTextColor = Color.White,
+                                focusedBorderColor = Color.White,
+                                unfocusedBorderColor = Color(0x4DFFFFFF)
+                            )
+                        )
+                        Spacer(Modifier.height(10.dp))
+                        Button(
+                            onClick = {
+                                if (customQuery.isNotBlank()) {
+                                    scope.launch {
+                                        isSearchingCustom = true
+                                        val res = withContext(Dispatchers.IO) {
+                                            LyricsRepository.getLyrics(customQuery.trim(), "")
+                                        }
+                                        if (res != null) {
+                                            lyricsResult = res
+                                        }
+                                        isSearchingCustom = false
+                                    }
+                                }
+                            },
+                            enabled = customQuery.isNotBlank() && !isSearchingCustom,
+                            shape = RoundedCornerShape(12.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF333C4A))
+                        ) {
+                            if (isSearchingCustom) {
+                                CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp, color = Color.White)
+                            } else {
+                                Text("Cari Lirik", color = Color.White, fontWeight = FontWeight.Bold)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
