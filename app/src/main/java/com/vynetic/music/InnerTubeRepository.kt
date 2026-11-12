@@ -90,18 +90,17 @@ object InnerTubeRepository {
             throw IOException("InnerTube hanya mengembalikan format terenkripsi/segmented untuk lagu ini. Format tersebut belum didukung oleh pemutar VYNETIC saat ini.")
         }
 
-        val target = when (quality) {
-            "Rendah · 64 kbps" -> 64_000
-            "Sedang · 128 kbps" -> 128_000
-            "Tinggi · 192 kbps" -> 192_000
-            else -> Int.MAX_VALUE
+        val mp4Audio = direct.filter {
+            it.optString("mimeType").startsWith("audio/mp4") || it.optInt("itag") == 140
         }
-        val chosen = if (target == Int.MAX_VALUE) {
-            direct.maxByOrNull { it.optInt("bitrate") }
-        } else {
-            direct.filter { it.optInt("bitrate") <= target }.maxByOrNull { it.optInt("bitrate") }
-                ?: direct.minByOrNull { it.optInt("bitrate") }
-        }
+        val pool = if (mp4Audio.isNotEmpty()) mp4Audio else direct
+        val chosen = when (quality) {
+            "Rendah · 64 kbps" -> pool.find { it.optInt("itag") == 139 } ?: pool.minByOrNull { it.optInt("bitrate") }
+            "Sedang · 128 kbps" -> pool.find { it.optInt("itag") == 140 } ?: pool.minByOrNull { kotlin.math.abs(it.optInt("bitrate") - 128_000) }
+            "Tinggi · 192 kbps" -> pool.maxByOrNull { it.optInt("bitrate") }
+            else -> pool.find { it.optInt("itag") == 140 } ?: pool.maxByOrNull { it.optInt("bitrate") }
+        } ?: pool.firstOrNull()
+
         return chosen?.optString("url")?.takeIf { it.startsWith("https://") }
             ?: throw IOException("URL audio langsung tidak ditemukan.")
     }

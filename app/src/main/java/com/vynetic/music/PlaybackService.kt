@@ -49,6 +49,7 @@ class PlaybackService : MediaSessionService() {
         val player = ExoPlayer.Builder(this)
             .setAudioAttributes(audioAttributes, true)
             .setMediaSourceFactory(DefaultMediaSourceFactory(dataSourceFactory))
+            .setWakeMode(C.WAKE_MODE_NETWORK)
             .build()
 
         player.addListener(object : Player.Listener {
@@ -69,6 +70,17 @@ class PlaybackService : MediaSessionService() {
 
         session = MediaSession.Builder(this, player)
             .setSessionActivity(pendingIntent)
+            .setCallback(object : MediaSession.Callback {
+                override fun onConnect(
+                    session: MediaSession,
+                    controller: MediaSession.ControllerInfo
+                ): MediaSession.ConnectionResult {
+                    return MediaSession.ConnectionResult.accept(
+                        MediaSession.ConnectionResult.DEFAULT_SESSION_COMMANDS.buildUpon().build(),
+                        MediaSession.ConnectionResult.DEFAULT_PLAYER_COMMANDS.buildUpon().build()
+                    )
+                }
+            })
             .build()
     }
 
