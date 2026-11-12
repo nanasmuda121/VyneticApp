@@ -1,6 +1,9 @@
 package com.vynetic.music
 
+import android.app.PendingIntent
+import android.content.Intent
 import android.media.audiofx.Equalizer
+import androidx.media3.common.Player
 import androidx.media3.datasource.DefaultHttpDataSource
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
@@ -22,13 +25,40 @@ class PlaybackService : MediaSessionService() {
         val player = ExoPlayer.Builder(this)
             .setMediaSourceFactory(DefaultMediaSourceFactory(dataSourceFactory))
             .build()
-        session = MediaSession.Builder(this, player).build()
-        runCatching {
-            equalizer = Equalizer(0, player.audioSessionId).apply { enabled = true }
-            eqBandCount = equalizer?.numberOfBands?.toInt() ?: 5
-            eqBandRange = equalizer?.bandLevelRange ?: shortArrayOf(-1500, 1500)
-            activeEqualizer = equalizer
-            eqAvailable = true
+
+        player.addListener(object : Player.Listener {
+            override fun onAudioSessionIdChanged(audioSessionId: Int) {
+                if (audioSessionId > 0) {
+                    runCatching {
+                        equalizer?.release()
+                        val eq = Equalizer(0, audioSessionId).apply { enabled = false }
+                        equalizer = eq
+                        eqBandCount = eq.numberOfBands.toInt()
+                        eqBandRange = eq.bandLevelRange ?: shortArrayOf(-1500, 1500)
+                        activeEqualizer = eq
+                        eqAvailable = true
+                    }
+                }
+            }
+        })
+
+        val sessionActivityIntent = Intent(this, MainActivity::class.java)
+        val pendingIntent = PendingIntent.getActivity(
+            this,
+            0,
+            sessionActivityIntent,
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
+
+        session = MediaSession.Builder(this, player)
+            .setSessionActivity(pendingIntent)
+            .build()
+    }
+
+    override fun onTaskRemoved(rootIntent: Intent?) {
+        val player = session?.player
+        if (player == null || !player.playWhenReady || player.mediaItemCount == 0) {
+            stopSelf()
         }
     }
 
