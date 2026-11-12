@@ -28,8 +28,10 @@ class PlaybackService : MediaSessionService() {
             val notificationProvider = DefaultMediaNotificationProvider.Builder(this)
                 .setChannelId(CHANNEL_ID)
                 .setChannelName(R.string.playback_channel_name)
-                .setSmallIcon(R.drawable.ic_notification)
                 .build()
+                .apply {
+                    setSmallIcon(R.drawable.ic_notification)
+                }
             setMediaNotificationProvider(notificationProvider)
         }
 
